@@ -1,0 +1,2 @@
+# ChaturAIConfig
+Remote JSON config
