@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "providers": {
+    "chatgpt": {
+      "detection": {
+        "container": "nav[aria-label=\"Chat history\"], nav[aria-label=\"Chats\"], nav[aria-label=\"chat history\"]",
+        "fallbackContainer": "nav",
+        "item": "a[href^=\"/c/\"], a[href^=\"/g/\"]",
+        "title": "div.relative, div.overflow-hidden, p, span, div",
+        "idPattern": "\\/(?:c|g)\\/([a-zA-Z0-9-]+)"
+      },
+      "input": {
+        "selectors": [
+          "#prompt-textarea",
+          "div[contenteditable=\"true\"][data-placeholder]",
+          "div[contenteditable=\"true\"]"
+        ]
+      }
+    },
+    "gemini": {
+      "detection": {
+        "container": "[role=\"navigation\"]",
+        "fallbackContainer": "aside, nav",
+        "item": "a[href^=\"/app/\"], a[href^=\"/chat/\"]",
+        "title": "span, div",
+        "idPattern": "\\/(?:app|chat)\\/([a-zA-Z0-9_-]{8,})"
+      },
+      "input": {
+        "selectors": [
+          ".ql-editor[contenteditable=\"true\"]",
+          "rich-textarea div[contenteditable=\"true\"]",
+          "div[contenteditable=\"true\"]"
+        ]
+      }
+    },
+    "grok": {
+      "detection": {
+        "container": "[role=\"navigation\"]",
+        "fallbackContainer": "nav, aside",
+        "item": "a[href*=\"/chat/\"], a[href*=\"/conversation/\"]",
+        "title": "span, div",
+        "idPattern": "\\/(?:chat|conversation)\\/([a-zA-Z0-9_-]+)"
+      },
+      "input": {
+        "selectors": [
+          "textarea",
+          "div[contenteditable=\"true\"]"
+        ]
+      }
+    },
+    "claude": {
+      "detection": {
+        "container": "nav, [data-testid=\"sidebar\"], [class*=\"sidebar\"], [class*=\"Sidebar\"]",
+        "fallbackContainer": "aside, nav",
+        "item": "a[href^=\"/chat/\"]",
+        "title": "span, div, p",
+        "idPattern": "\\/chat\\/([a-zA-Z0-9-]+)"
+      },
+      "input": {
+        "selectors": [
+          "div[contenteditable=\"true\"].ProseMirror",
+          "div[contenteditable=\"true\"][data-placeholder]",
+          "div[contenteditable=\"true\"]"
+        ]
+      }
+    }
+  }
+}
