@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "providers": {
     "chatgpt": {
       "detection": {
@@ -37,9 +37,9 @@
       "detection": {
         "container": "[role=\"navigation\"]",
         "fallbackContainer": "nav, aside",
-        "item": "a[href*=\"/chat/\"], a[href*=\"/conversation/\"]",
+        "item": "a[href*=\"/c/\"], a[href*=\"/chat/\"], a[href*=\"/conversation/\"]",
         "title": "span, div",
-        "idPattern": "\\/(?:chat|conversation)\\/([a-zA-Z0-9_-]+)"
+        "idPattern": "\\/(?:c|chat|conversation)\\/([a-zA-Z0-9_-]+)"
       },
       "input": {
         "selectors": [
