@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "providers": {
     "chatgpt": {
       "detection": {
@@ -35,11 +35,11 @@
     },
     "grok": {
       "detection": {
-        "container": "[role=\"navigation\"]",
+        "container": "[role=\"navigation\"], [class*=\"sidebar\"], [class*=\"Sidebar\"], [class*=\"conversation\"], [class*=\"Conversation\"]",
         "fallbackContainer": "nav, aside",
-        "item": "a[href*=\"/c/\"], a[href*=\"/chat/\"], a[href*=\"/conversation/\"]",
+        "item": "a[href^=\"/c/\"], a[href*=\"/c/\"]",
         "title": "span, div",
-        "idPattern": "\\/(?:c|chat|conversation)\\/([a-zA-Z0-9_-]+)"
+        "idPattern": "\\/c\\/([a-zA-Z0-9_-]+)"
       },
       "input": {
         "selectors": [
