@@ -1,5 +1,16 @@
 {
-  "version": 3,
+  "version": 5,
+  "_review": {
+    "purpose": "Draft for the NEXT remote config push. Version bumped to 5 so it clears the version gate (DEFAULT_CONFIG.version = 4) and actually takes effect once deployed to the ToolTera/ChaturAIConfig repo. The _review and _* fields are ignored by isValidConfig() and are safe to leave in or strip before publishing.",
+    "verifiedOn": "2026-06-09 (live-DOM console check, signed-in sessions)",
+    "status": {
+      "chatgpt": "VERIFIED CURRENT — container nav[aria-label=\"Chat history\"], item 28/28, idPattern 28/28, title 28/28, input #prompt-textarea, identity /api/auth/session->user.id all matched. No change.",
+      "gemini": "VERIFIED CURRENT + FIXED — container [role=\"navigation\"], item 13/13, idPattern 13/13, input .ql-editor, identity /app 21-digit GAIA all matched. FIX APPLIED: title selector changed from 'span, div' (0/13 — querySelector returned the empty leading-icon div because querySelector matches tree-order-first, not selector-list-order) to '.title-text', the real title node (span.title-text, confirmed on 3/3 sampled items). detector.ts still falls back to link.textContent if .title-text is ever absent, so this is strictly safer. NOTE: do NOT append 'span, div' as a fallback in the same selector string — tree-order would make the icon div win again.",
+      "grok": "TESTED 2026-06-09. CHAT DETECTION OK — driven by the network interceptor (/rest/app-chat/conversations), NOT the DOM. The DOM item selector 'a[href*=\"/c/\"]' now matches 0 (Grok moved sidebar history to shadcn buttons with no /c/ href), but this is harmless — detection works via network, and the selector stays as a fallback. Input 'textarea' OK. IDENTITY FIXED — old regex '\"userId\":\"<uuid>\"' required literal quotes, but Grok now streams it escaped in an RSC payload (raw text: ...\\\"userId\\\":\\\"13ab1054-...\\\",\\\"email\\\":\\\"...). New regexPattern 'userId[^a-f0-9]{1,12}(<uuid>)' matches userId followed by 1-12 non-hex chars (the escaped \":\" gap) then the uuid — escape-depth agnostic, also works if Grok reverts to unescaped quotes. Verified the uuid sits immediately before the account email. DOM SCRAPING — INVESTIGATED, CONFIRMED INFEASIBLE (do not chase). Grok history is behind an on-demand 'History' button that opens a dialog; entries render as JS <button>s, not <a href>. Verified across 3 probes: full sidebar attribute dump found 0 elements carrying the chat id (no /c/ href, no data-id/data-href/uuid attribute); the History dialog list had 12 buttons and 0 anchors; the only /c/ anchor in the whole page is the CURRENT chat (page URL), never a history entry. Even if the id were in an attribute, the detector's automated scrapes never click 'History', so DOM detection would never fire. DECISION: Grok detection is network-interceptor-only by design (/rest/app-chat/conversations, see network-interceptor.ts). The DOM item selector 'a[href*=\"/c/\"]' is kept ONLY as a dormant fallback in case Grok reverts to anchor-based history — it is expected to match 0 today and that is correct, not a bug.",
+      "claude": "VERIFIED CURRENT + FIXED (2026-06-09) — container 'nav', item 'a[href^=\"/chat/\"]' 6/6, idPattern 6/6, input '...ProseMirror', identity /api/account->uuid (200, ffffc040...) all matched. FIX APPLIED: title selector changed from 'span, div, p' (which matched the outer div and produced DOUBLED titles, e.g. 'Personal fitness tracking PWAPersonal fitness tracking PWA') to '.sr-only, .block.truncate'. Each Claude chat item renders the title twice: span.sr-only (a11y copy) + span.block.truncate (visible copy); the old selector's first tree-order match was the wrapper div whose textContent concatenated both. New selector targets a single-title node (neither matches the doubled wrapper: the outer span has 'truncate' but not 'block'). detector.ts still falls back to link.textContent if absent. Do NOT add bare 'span'/'div'/'.truncate' as fallbacks — they re-match the doubled wrapper."
+    },
+    "candidates": {}
+  },
   "providers": {
     "chatgpt": {
       "detection": {
@@ -15,6 +26,12 @@
           "div[contenteditable=\"true\"][data-placeholder]",
           "div[contenteditable=\"true\"]"
         ]
+      },
+      "identity": {
+        "type": "json",
+        "endpoint": "/api/auth/session",
+        "method": "GET",
+        "jsonPath": "user.id"
       }
     },
     "gemini": {
@@ -22,7 +39,7 @@
         "container": "[role=\"navigation\"]",
         "fallbackContainer": "aside, nav",
         "item": "a[href^=\"/app/\"], a[href^=\"/chat/\"]",
-        "title": "span, div",
+        "title": ".title-text",
         "idPattern": "\\/(?:app|chat)\\/([a-zA-Z0-9_-]{8,})"
       },
       "input": {
@@ -31,6 +48,12 @@
           "rich-textarea div[contenteditable=\"true\"]",
           "div[contenteditable=\"true\"]"
         ]
+      },
+      "identity": {
+        "type": "html-regex",
+        "endpoint": "/app",
+        "method": "GET",
+        "regexPattern": "\"(\\d{21})\""
       }
     },
     "grok": {
@@ -46,6 +69,12 @@
           "textarea",
           "div[contenteditable=\"true\"]"
         ]
+      },
+      "identity": {
+        "type": "html-regex",
+        "endpoint": "/",
+        "method": "GET",
+        "regexPattern": "userId[^a-f0-9]{1,12}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"
       }
     },
     "claude": {
@@ -53,7 +82,7 @@
         "container": "nav, [data-testid=\"sidebar\"], [class*=\"sidebar\"], [class*=\"Sidebar\"]",
         "fallbackContainer": "aside, nav",
         "item": "a[href^=\"/chat/\"]",
-        "title": "span, div, p",
+        "title": ".sr-only, .block.truncate",
         "idPattern": "\\/chat\\/([a-zA-Z0-9-]+)"
       },
       "input": {
@@ -62,6 +91,12 @@
           "div[contenteditable=\"true\"][data-placeholder]",
           "div[contenteditable=\"true\"]"
         ]
+      },
+      "identity": {
+        "type": "json",
+        "endpoint": "/api/account",
+        "method": "GET",
+        "jsonPath": "uuid"
       }
     }
   }
