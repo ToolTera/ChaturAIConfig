@@ -158,7 +158,7 @@
         "limit": 200000
       },
       "pillInterceptor": {
-        "detailPattern": "\\/api\\/organizations\\/[^/]+\\/chat_conversations\\/([a-zA-Z0-9-]+)$",
+        "detailPattern": "\\/api\\/organizations\\/[^/]+\\/chat_conversations\\/([a-zA-Z0-9-]+)(?:\\?|$)",
         "exportDetailPattern": "\\/api\\/organizations\\/[^/]+\\/chat_conversations\\/([a-zA-Z0-9-]+)(?:\\?|$)"
       }
     }
