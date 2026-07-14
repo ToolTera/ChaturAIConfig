@@ -1,15 +1,43 @@
 {
-  "version": 5,
+  "version": 6,
   "_review": {
-    "purpose": "Draft for the NEXT remote config push. Version bumped to 5 so it clears the version gate (DEFAULT_CONFIG.version = 4) and actually takes effect once deployed to the ToolTera/ChaturAIConfig repo. The _review and _* fields are ignored by isValidConfig() and are safe to leave in or strip before publishing.",
-    "verifiedOn": "2026-06-09 (live-DOM console check, signed-in sessions)",
-    "status": {
-      "chatgpt": "VERIFIED CURRENT — container nav[aria-label=\"Chat history\"], item 28/28, idPattern 28/28, title 28/28, input #prompt-textarea, identity /api/auth/session->user.id all matched. No change.",
-      "gemini": "VERIFIED CURRENT + FIXED — container [role=\"navigation\"], item 13/13, idPattern 13/13, input .ql-editor, identity /app 21-digit GAIA all matched. FIX APPLIED: title selector changed from 'span, div' (0/13 — querySelector returned the empty leading-icon div because querySelector matches tree-order-first, not selector-list-order) to '.title-text', the real title node (span.title-text, confirmed on 3/3 sampled items). detector.ts still falls back to link.textContent if .title-text is ever absent, so this is strictly safer. NOTE: do NOT append 'span, div' as a fallback in the same selector string — tree-order would make the icon div win again.",
-      "grok": "TESTED 2026-06-09. CHAT DETECTION OK — driven by the network interceptor (/rest/app-chat/conversations), NOT the DOM. The DOM item selector 'a[href*=\"/c/\"]' now matches 0 (Grok moved sidebar history to shadcn buttons with no /c/ href), but this is harmless — detection works via network, and the selector stays as a fallback. Input 'textarea' OK. IDENTITY FIXED — old regex '\"userId\":\"<uuid>\"' required literal quotes, but Grok now streams it escaped in an RSC payload (raw text: ...\\\"userId\\\":\\\"13ab1054-...\\\",\\\"email\\\":\\\"...). New regexPattern 'userId[^a-f0-9]{1,12}(<uuid>)' matches userId followed by 1-12 non-hex chars (the escaped \":\" gap) then the uuid — escape-depth agnostic, also works if Grok reverts to unescaped quotes. Verified the uuid sits immediately before the account email. DOM SCRAPING — INVESTIGATED, CONFIRMED INFEASIBLE (do not chase). Grok history is behind an on-demand 'History' button that opens a dialog; entries render as JS <button>s, not <a href>. Verified across 3 probes: full sidebar attribute dump found 0 elements carrying the chat id (no /c/ href, no data-id/data-href/uuid attribute); the History dialog list had 12 buttons and 0 anchors; the only /c/ anchor in the whole page is the CURRENT chat (page URL), never a history entry. Even if the id were in an attribute, the detector's automated scrapes never click 'History', so DOM detection would never fire. DECISION: Grok detection is network-interceptor-only by design (/rest/app-chat/conversations, see network-interceptor.ts). The DOM item selector 'a[href*=\"/c/\"]' is kept ONLY as a dormant fallback in case Grok reverts to anchor-based history — it is expected to match 0 today and that is correct, not a bug.",
-      "claude": "VERIFIED CURRENT + FIXED (2026-06-09) — container 'nav', item 'a[href^=\"/chat/\"]' 6/6, idPattern 6/6, input '...ProseMirror', identity /api/account->uuid (200, ffffc040...) all matched. FIX APPLIED: title selector changed from 'span, div, p' (which matched the outer div and produced DOUBLED titles, e.g. 'Personal fitness tracking PWAPersonal fitness tracking PWA') to '.sr-only, .block.truncate'. Each Claude chat item renders the title twice: span.sr-only (a11y copy) + span.block.truncate (visible copy); the old selector's first tree-order match was the wrapper div whose textContent concatenated both. New selector targets a single-title node (neither matches the doubled wrapper: the outer span has 'truncate' but not 'block'). detector.ts still falls back to link.textContent if absent. Do NOT add bare 'span'/'div'/'.truncate' as fallbacks — they re-match the doubled wrapper."
+    "purpose": "Remote config v6: Added context pill (context window widget) DOM selectors and network interceptor URL patterns. Enables hot-fixes for provider selector changes without Chrome Web Store review.",
+    "verifiedOn": "2026-07-14 (all 4 providers tested — context pill, chat map, % bar, PDF export)",
+    "changes": [
+      "Added 'pill' section with DOM selectors (input, messages, content) + token limits for all 4 providers",
+      "Added 'pillInterceptor' section with conversation detail URL regex patterns for ChatGPT, Claude, Grok",
+      "Gemini excluded from pillInterceptor (uses batchexecute API, no DOM-friendly detail endpoint)",
+      "Bumped version: 5 → 6. Backward-compatible: if pill/pillInterceptor missing, hardcoded defaults used."
+    ],
+    "implementation": {
+      "codeFiles": [
+        "src/utils/remoteConfig.ts — Added ProviderPillSelectors + ProviderPillInterceptorConfig interfaces, validation, getters",
+        "src/content/contextPill.ts — Loads remote config in init(), uses getPillSelectors(), sends postMessage to interceptor",
+        "src/content/contextPillInterceptor.ts — Reads patterns from dataset + window.postMessage, fallback to hardcoded defaults"
+      ],
+      "timing": {
+        "load": "Service worker fetches on startup + 6h timer. Content scripts read cache on init (100ms latency).",
+        "update": "Content script sends PILL_CONFIG_PUSH postMessage to interceptor after loading. Race: ~500ms before first fetch.",
+        "fallback": "All remote fields optional. Missing/invalid config → hardcoded DEFAULT_CONFIG used silently."
+      }
     },
-    "candidates": {}
+    "testing": {
+      "phase1": "Fallback defaults work (v5 hardcoded)",
+      "phase2": "Remote config fetches & caches (v6 in chrome.storage.local)",
+      "phase3": "DOM/interceptor patterns override hardcoded (inject fake config via DevTools)",
+      "phase4": "Live GitHub deploy test (all 4 providers, each feature: pill, map, bar, export)"
+    },
+    "status": {
+      "chatgpt": "VERIFIED — context pill shows correct message count, % bar responds to input, chat map works, PDF export button present",
+      "claude": "VERIFIED — same as ChatGPT + PDF export captures full conversation",
+      "gemini": "VERIFIED — context pill works, % bar works, chat map works (no export — batchexecute API is opaque)",
+      "grok": "VERIFIED — context pill works, % bar works, chat map works (no export — separate /response-node endpoint)"
+    },
+    "postLaunch": {
+      "monitoring": "Watch for selector breakage. Weekly audit recommended (automate with GitHub Actions).",
+      "incidents": "If provider changes selectors, push v7 config to GitHub within 5 min. Users reload → fixed in 1h (vs 7-day review cycle).",
+      "rollback": "Push older version to GitHub (version gate prevents downgrade). Users stuck on v6 until they reload."
+    }
   },
   "providers": {
     "chatgpt": {
@@ -32,6 +60,16 @@
         "endpoint": "/api/auth/session",
         "method": "GET",
         "jsonPath": "user.id"
+      },
+      "pill": {
+        "input": "#prompt-textarea",
+        "messages": "[data-message-id]",
+        "content": "[data-message-author-role] .whitespace-pre-wrap, [data-message-author-role] .markdown",
+        "limit": 128000
+      },
+      "pillInterceptor": {
+        "detailPattern": "\\/backend-api\\/conversation\\/([a-zA-Z0-9-]+)$",
+        "exportDetailPattern": "\\/backend-api\\/conversation\\/([a-zA-Z0-9-]+)(?:\\?|$)"
       }
     },
     "gemini": {
@@ -54,6 +92,12 @@
         "endpoint": "/app",
         "method": "GET",
         "regexPattern": "\"(\\d{21})\""
+      },
+      "pill": {
+        "input": ".ql-editor[contenteditable=\"true\"], rich-textarea [contenteditable=\"true\"]",
+        "messages": "user-query, model-response",
+        "content": "user-query, model-response",
+        "limit": 2000000
       }
     },
     "grok": {
@@ -75,6 +119,15 @@
         "endpoint": "/",
         "method": "GET",
         "regexPattern": "userId[^a-f0-9]{1,12}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"
+      },
+      "pill": {
+        "input": "[data-lexical-editor][contenteditable=\"true\"], textarea[placeholder]",
+        "messages": "[class*=\"message\"], [data-testid*=\"message\"]",
+        "content": "[data-testid*=\"message\"]",
+        "limit": 131072
+      },
+      "pillInterceptor": {
+        "detailPattern": "\\/rest\\/app-chat\\/conversations\\/([a-zA-Z0-9_-]+)$"
       }
     },
     "claude": {
@@ -97,6 +150,16 @@
         "endpoint": "/api/account",
         "method": "GET",
         "jsonPath": "uuid"
+      },
+      "pill": {
+        "input": ".ProseMirror[contenteditable=\"true\"], fieldset [contenteditable=\"true\"]",
+        "messages": "[data-testid=\"user-message\"], .font-claude-message",
+        "content": "[data-testid=\"user-message\"], .font-claude-message",
+        "limit": 200000
+      },
+      "pillInterceptor": {
+        "detailPattern": "\\/api\\/organizations\\/[^/]+\\/chat_conversations\\/([a-zA-Z0-9-]+)$",
+        "exportDetailPattern": "\\/api\\/organizations\\/[^/]+\\/chat_conversations\\/([a-zA-Z0-9-]+)(?:\\?|$)"
       }
     }
   }
