@@ -1,5 +1,13 @@
 {
   "version": 7,
+  "_guide": {
+    "detection": "DOM selectors for sidebar chat list detection",
+    "input": "DOM selectors for input field location (sidebar feature)",
+    "identity": "API endpoint for extracting provider user ID",
+    "pill": "Context window widget — DOM selectors + token limit",
+    "pillInterceptor": "API patterns for full conversation detail (context pill data)",
+    "chatDetectionPatterns": "API patterns for conversation list & delete detection (sidebar data)"
+  },
   "_review": {
     "purpose": "Remote config v7: Made chat detection API patterns remotely patchable. Enables hot-fixes for conversation list/delete endpoints without rebuilds. Backward-compatible: missing patterns fall back to hardcoded defaults.",
     "verifiedOn": "2026-07-14 (added chat detection patterns for all 4 providers)",
@@ -135,7 +143,7 @@
         "regexPattern": "userId[^a-f0-9]{1,12}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"
       },
       "pill": {
-        "input": "[data-lexical-editor][contenteditable=\"true\"], textarea[placeholder]",
+        "input": "div.tiptap, div.ProseMirror, div[contenteditable=\"true\"], textarea",
         "messages": "[class*=\"message\"], [data-testid*=\"message\"]",
         "content": "[data-testid*=\"message\"]",
         "limit": 131072
