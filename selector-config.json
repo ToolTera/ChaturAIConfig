@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 1,
   "_guide": {
     "detection": "DOM selectors for sidebar chat list detection",
     "input": "DOM selectors for input field location (sidebar feature)",
@@ -9,13 +9,13 @@
     "chatDetectionPatterns": "API patterns for conversation list & delete detection (sidebar data)"
   },
   "_review": {
-    "purpose": "Remote config v7: Made chat detection API patterns remotely patchable. Enables hot-fixes for conversation list/delete endpoints without rebuilds. Backward-compatible: missing patterns fall back to hardcoded defaults.",
-    "verifiedOn": "2026-07-14 (added chat detection patterns for all 4 providers)",
+    "purpose": "Remote config v1 (COUNTER RESET 2026-07-15, pre-launch — old v1–v8 history is void): Fixed Claude context pill message selectors — claude.ai removed the .font-claude-message class (~2026-07), so AI messages matched nothing (chat map showed no AI anchors, jump-to had no target). New selector keys off the assistant container's data-is-streaming attribute.",
+    "verifiedOn": "2026-07-15 (Claude DOM probe: assistant container = div[data-is-streaming]; claude.ai virtualizes long chats — only a window of messages is in the DOM)",
     "changes": [
-      "Added 'chatDetectionPatterns' section with listPatterns + deletePatterns for all 4 providers",
-      "ChatGPT, Claude, Grok: list + delete patterns remote. Gemini: batchexecute list pattern only (delete opaque)",
-      "Fixed Claude's context pill detailPattern to allow query strings: $ → (?:\\?|$)",
-      "Bumped version: 6 → 7. Backward-compatible: if chatDetectionPatterns missing, hardcoded defaults used."
+      "VERSION COUNTER RESET: hardcoded DEFAULT_CONFIG floor and this file both set to 1; next remote-only hot-fix bumps this file to 2 (remote must always be >= the hardcoded floor)",
+      "Dev machines that cached a pre-reset version must clear 'chaturAI-remote-selector-config' from chrome.storage.local once, else the stale cache outranks v1",
+      "claude.pill.messages + claude.pill.content: '[data-testid=\"user-message\"], .font-claude-message' → '[data-testid=\"user-message\"], div[data-is-streaming]'",
+      "(pre-reset history, 2026-07-14): added chatDetectionPatterns for all 4 providers; fixed Claude pill detailPattern to allow query strings: $ → (?:\\?|$)"
     ],
     "implementation": {
       "codeFiles": [
@@ -183,8 +183,8 @@
       },
       "pill": {
         "input": ".ProseMirror[contenteditable=\"true\"], fieldset [contenteditable=\"true\"]",
-        "messages": "[data-testid=\"user-message\"], .font-claude-message",
-        "content": "[data-testid=\"user-message\"], .font-claude-message",
+        "messages": "[data-testid=\"user-message\"], div[data-is-streaming]",
+        "content": "[data-testid=\"user-message\"], div[data-is-streaming]",
         "limit": 200000
       },
       "pillInterceptor": {
