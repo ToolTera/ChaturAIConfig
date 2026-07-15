@@ -15,6 +15,9 @@
       "VERSION COUNTER RESET: hardcoded DEFAULT_CONFIG floor and this file both set to 1; next remote-only hot-fix bumps this file to 2 (remote must always be >= the hardcoded floor)",
       "Dev machines that cached a pre-reset version must clear 'chaturAI-remote-selector-config' from chrome.storage.local once, else the stale cache outranks v1",
       "claude.pill.messages + claude.pill.content: '[data-testid=\"user-message\"], .font-claude-message' → '[data-testid=\"user-message\"], div[data-is-streaming]'",
+      "grok.pill.messages + grok.pill.content → '[data-testid=\"user-message\"], [data-testid=\"assistant-message\"]' (2026-07 audit: bubbles carry role testids; both roles share identical classes so the old class-based selector/role-sniff misclassified everything as AI)",
+      "grok deletePattern → allows optional soft/ segment (grok now soft-deletes via DELETE /rest/app-chat/conversations/soft/{id}; old pattern matched nothing → deletions went undetected)",
+      "grok pillInterceptor REMOVED — grok's detail endpoint moved to conversations_v2 (metadata only); message text now only travels in POST /load-responses (partial virtualized windows), not capturable by the GET-based interceptor. Grok pill is DOM-only, like Gemini",
       "(pre-reset history, 2026-07-14): added chatDetectionPatterns for all 4 providers; fixed Claude pill detailPattern to allow query strings: $ → (?:\\?|$)"
     ],
     "implementation": {
@@ -144,19 +147,16 @@
       },
       "pill": {
         "input": "div.tiptap, div.ProseMirror, div[contenteditable=\"true\"], textarea",
-        "messages": "[class*=\"message\"], [data-testid*=\"message\"]",
-        "content": "[data-testid*=\"message\"]",
+        "messages": "[data-testid=\"user-message\"], [data-testid=\"assistant-message\"]",
+        "content": "[data-testid=\"user-message\"], [data-testid=\"assistant-message\"]",
         "limit": 131072
-      },
-      "pillInterceptor": {
-        "detailPattern": "\\/rest\\/app-chat\\/conversations\\/([a-zA-Z0-9_-]+)$"
       },
       "chatDetectionPatterns": {
         "listPatterns": [
           { "pattern": "\\/rest\\/app-chat\\/conversations(?:\\?|$)" }
         ],
         "deletePatterns": [
-          { "pattern": "\\/rest\\/app-chat\\/conversations\\/([a-zA-Z0-9_-]+)$", "idGroup": 1, "methods": ["DELETE"] }
+          { "pattern": "\\/rest\\/app-chat\\/conversations\\/(?:soft\\/)?([a-zA-Z0-9_-]+)$", "idGroup": 1, "methods": ["DELETE"] }
         ]
       }
     },
